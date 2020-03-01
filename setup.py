@@ -37,8 +37,8 @@ setup(
         'cloudinary_storage.management.commands'],
     include_package_data=True,
     install_requires=[
-        'requests>=2.10.0',
-        'cloudinary>=1.4.0'
+        'requests>=2.23.0',
+        'cloudinary>=1.20.0'
     ],
     extras_require={
         'video': ['python-magic>=0.4.12']
