@@ -86,7 +86,7 @@ class MediaCloudinaryStorage(Storage):
     def exists(self, name):
         url = self._get_url(name)
         response = requests.head(url)
-        if response.status_code == 404:
+        if response.status_code == 404 or response.status_code == 400:
             return False
         response.raise_for_status()
         return True
@@ -349,25 +349,16 @@ class StaticHashedCloudinaryStorage(HashCloudinaryMixin, ManifestFilesMixin, Sta
 
 
 class OverwriteAutoMediaCloudinaryStorage(MediaCloudinaryStorage):
-    """
-    Custom class for MUST
-    """
     RESOURCE_TYPE = RESOURCE_TYPES['RAW']
 
     def _upload(self, name, content):
         name_no_extension = os.path.splitext(name)[0]
-        options = {'invalidate': True, 'public_id': name_no_extension, 'unique_filename': False, 'use_filename': True, 'resource_type': self._get_resource_type(name), 'tags': self.TAG}
+        options = {'force_version': False, 'invalidate': True, 'public_id': name_no_extension, 'unique_filename': False, 'use_filename': True, 'resource_type': self._get_resource_type(name), 'tags': self.TAG}
+        folder = os.path.dirname(name)
+        if folder:
+            options['folder'] = folder
         cloudinary_result = cloudinary.uploader.upload(content, **options)
         return cloudinary_result
-
-    def exists(self, name):
-        url = self._get_url(name)
-        response = requests.head(url)
-        if response.status_code == 404 or response.status_code == 400:
-            return False
-        response.raise_for_status()
-        return True
-
 
     def _get_resource_type(self, name):
         """

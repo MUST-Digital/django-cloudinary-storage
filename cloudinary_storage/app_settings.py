@@ -38,7 +38,8 @@ def set_credentials(user_settings):
 set_credentials(user_settings)
 
 cloudinary.config(
-    secure=user_settings.get('SECURE', True)
+    secure=user_settings.get('SECURE', True),
+    force_version=user_settings.get('FORCE_VERSION', False),
 )
 
 MEDIA_TAG = user_settings.get('MEDIA_TAG', 'media')
