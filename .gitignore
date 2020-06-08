@@ -11,3 +11,4 @@ htmlcov
 build
 dist
 .python-version
+.vscode/
