@@ -66,7 +66,10 @@ class MediaCloudinaryStorage(Storage):
         name = self._prepend_prefix(name)
         content = UploadedFile(content, name)
         response = self._upload(name, content)
-        return response['public_id']
+        filename = response['public_id']
+        if response.get('format'):
+            filename = '.'.join([filename, response['format']])
+        return filename
 
     def delete(self, name):
         response = cloudinary.uploader.destroy(name, invalidate=True, resource_type=self._get_resource_type(name))
@@ -343,3 +346,66 @@ class HashCloudinaryMixin(object):
 
 class StaticHashedCloudinaryStorage(HashCloudinaryMixin, ManifestFilesMixin, StaticCloudinaryStorage):
     pass
+
+
+class OverwriteAutoMediaCloudinaryStorage(MediaCloudinaryStorage):
+    """
+    Custom class for MUST
+    """
+    RESOURCE_TYPE = RESOURCE_TYPES['RAW']
+
+    def _upload(self, name, content):
+        name_no_extension = os.path.splitext(name)[0]
+        options = {'invalidate': True, 'public_id': name_no_extension, 'unique_filename': False, 'use_filename': True, 'resource_type': self._get_resource_type(name), 'tags': self.TAG}
+        folder = os.path.dirname(name)
+        if folder:
+            options['folder'] = folder
+        cloudinary_result = cloudinary.uploader.upload(content, **options)
+        return cloudinary_result
+
+    def exists(self, name):
+        url = self._get_url(name)
+        response = requests.head(url)
+        if response.status_code == 404 or response.status_code == 400:
+            return False
+        response.raise_for_status()
+        return True
+
+
+    def _get_resource_type(self, name):
+        """
+        Implemented as static files can be of different resource types.
+        Because web developers are the people who control those files, we can distinguish them
+        simply by looking at their extensions, we don't need any content based validation.
+        """
+        extension = self._get_file_extension(name)
+        if extension is None:
+            return self.RESOURCE_TYPE
+        elif extension in app_settings.STATIC_IMAGES_EXTENSIONS:
+            return RESOURCE_TYPES['IMAGE']
+        elif extension in app_settings.STATIC_VIDEOS_EXTENSIONS:
+            return RESOURCE_TYPES['VIDEO']
+        else:
+            return self.RESOURCE_TYPE
+
+    @staticmethod
+    def _get_file_extension(name):
+        substrings = name.split('.')
+        if len(substrings) == 1:  # no extensions
+            return None
+        else:
+            return substrings[-1].lower()
+
+    def _get_url(self, name):
+        name = self._prepend_prefix(name)
+        cloudinary_resource = cloudinary.CloudinaryResource(
+            name,
+            default_resource_type=self._get_resource_type(name),
+            url_options={'force_version': False, 'invalidate': True}
+        )
+        return cloudinary_resource.url
+
+    def get_available_name(self, name, max_length=None):
+        if self.exists(name):
+            self.delete(name)
+        return name
