@@ -357,9 +357,6 @@ class OverwriteAutoMediaCloudinaryStorage(MediaCloudinaryStorage):
     def _upload(self, name, content):
         name_no_extension = os.path.splitext(name)[0]
         options = {'invalidate': True, 'public_id': name_no_extension, 'unique_filename': False, 'use_filename': True, 'resource_type': self._get_resource_type(name), 'tags': self.TAG}
-        folder = os.path.dirname(name)
-        if folder:
-            options['folder'] = folder
         cloudinary_result = cloudinary.uploader.upload(content, **options)
         return cloudinary_result
 
