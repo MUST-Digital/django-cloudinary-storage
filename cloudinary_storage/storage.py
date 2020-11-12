@@ -18,6 +18,10 @@ from django.utils.deconstruct import deconstructible
 from . import app_settings
 from .helpers import get_resources_by_path
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 RESOURCE_TYPES = {
     'IMAGE': 'image',
     'RAW': 'raw',
@@ -353,8 +357,22 @@ class OverwriteAutoMediaCloudinaryStorage(MediaCloudinaryStorage):
 
     def _upload(self, name, content):
         name_no_extension = os.path.splitext(name)[0]
-        options = {'overwrite': True, 'force_version': False, 'invalidate': True, 'public_id': name_no_extension, 'unique_filename': False, 'use_filename': True, 'resource_type': self._get_resource_type(name), 'tags': self.TAG}
+        extension = self._get_file_extension(name)
+        options = {
+            'overwrite': True, 'force_version': False, 'invalidate': True,
+            'public_id': name_no_extension, 'unique_filename': False,
+            'use_filename': True, 'resource_type': self._get_resource_type(name),
+            'tags': self.TAG
+        }
         cloudinary_result = cloudinary.uploader.upload(content, **options)
+        cloudinary_explicit = cloudinary.uploader.explicit(
+            name_no_extension, type='upload',
+            resource_type=self._get_resource_type(name),
+            eager=f'q_auto,f_auto/{extension}|q_auto,f_webp,fl_awebp/{extension}|q_auto,f_jp2/{extension}', invalidate=True, overwrite=True)
+        logger.info(options)
+
+            # q_auto,f_auto/png|q_auto,f_webp,fl_awebp/png|q_auto,f_jp2/png
+
         return cloudinary_result
 
     def _get_resource_type(self, name):
