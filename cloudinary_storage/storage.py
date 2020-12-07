@@ -365,10 +365,12 @@ class OverwriteAutoMediaCloudinaryStorage(MediaCloudinaryStorage):
             'tags': self.TAG
         }
         cloudinary_result = cloudinary.uploader.upload(content, **options)
-        cloudinary_explicit = cloudinary.uploader.explicit(
-            name_no_extension, type='upload',
-            resource_type=self._get_resource_type(name),
-            eager=f'q_auto,f_auto/{extension}|q_auto,f_webp,fl_awebp/{extension}|q_auto,f_jp2/{extension}', invalidate=True, overwrite=True)
+        # Getting errors uploading GDN banners, circumvent!
+        if options['resource_type'] != 'raw':
+            cloudinary_explicit = cloudinary.uploader.explicit(
+                name_no_extension, type='upload',
+                resource_type=self._get_resource_type(name),
+                eager=f'q_auto,f_auto/{extension}|q_auto,f_webp,fl_awebp/{extension}|q_auto,f_jp2/{extension}', invalidate=True, overwrite=True)
         logger.info(options)
 
             # q_auto,f_auto/png|q_auto,f_webp,fl_awebp/png|q_auto,f_jp2/png
