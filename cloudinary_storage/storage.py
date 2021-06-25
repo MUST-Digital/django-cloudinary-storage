@@ -246,6 +246,21 @@ class StaticCloudinaryStorage(MediaCloudinaryStorage):
     def _get_prefix(self):
         return settings.STATIC_URL
 
+    def _remove_extension_for_non_raw_file(self, name):
+        """
+        Implemented as image and video files' Cloudinary public id
+        shouldn't contain file extensions, otherwise Cloudinary url
+        would contain doubled extension - Cloudinary adds extension to url
+        to allow file conversion to arbitrary file, like png to jpg.
+        """
+        file_resource_type = self._get_resource_type(name)
+        if file_resource_type is None or file_resource_type == self.RESOURCE_TYPE:
+            return name
+        else:
+            extension = self._get_file_extension(name)
+            return name[:-len(extension) - 1]
+
+
     def listdir(self, path):
         """
         Not implemented as static assets can be of different resource types
