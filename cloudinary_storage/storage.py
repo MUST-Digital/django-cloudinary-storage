@@ -99,7 +99,9 @@ class MediaCloudinaryStorage(Storage):
 
 
     def delete(self, name):
-        response = cloudinary.uploader.destroy(name, invalidate=True, resource_type=self._get_resource_type(name))
+        # Need the public_id
+        public_id = self._remove_extension_for_non_raw_file(name)
+        response = cloudinary.uploader.destroy(public_id)
         return response['result'] == 'ok'
 
     def _get_url(self, name):
