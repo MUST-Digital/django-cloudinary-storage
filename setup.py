@@ -21,7 +21,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='django-cloudinary-storage',
-    version='0.4.1',
+    version='must-0.4.2',
     author='Konrad Lisiczynski',
     author_email='klisiczynski@gmail.com',
     description=description,
